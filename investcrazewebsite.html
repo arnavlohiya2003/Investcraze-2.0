@@ -1,0 +1,909 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InvestCraze — Fund Recommender</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0e0e0e;
+  --ink-muted: #555;
+  --ink-faint: #999;
+  --surface: #fafaf8;
+  --card: #ffffff;
+  --border: #e8e6e0;
+  --border-strong: #ccc;
+  --teal: #0d7a5f;
+  --teal-light: #e6f4f0;
+  --teal-mid: #1a9e7a;
+  --amber: #b85c0a;
+  --amber-light: #fdf3e8;
+  --red: #b52b2b;
+  --red-light: #fdeaea;
+  --blue: #1a5fa8;
+  --blue-light: #e8f0fb;
+  --gray-light: #f3f2ef;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--surface);
+  color: var(--ink);
+  min-height: 100vh;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* NAV */
+nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem;
+  height: 56px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
+}
+.nav-brand {
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px; letter-spacing: -0.02em; color: var(--ink);
+}
+.nav-brand span { color: var(--teal); }
+.nav-tag {
+  font-size: 11px; font-weight: 500; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--ink-faint);
+}
+
+/* HERO */
+.hero {
+  max-width: 680px; margin: 0 auto;
+  padding: 4rem 2rem 2rem;
+  text-align: center;
+}
+.hero-eyebrow {
+  font-size: 11px; font-weight: 500; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--teal);
+  margin-bottom: 1rem;
+}
+.hero h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.15; letter-spacing: -0.02em;
+  color: var(--ink); margin-bottom: 1rem;
+}
+.hero h1 em { font-style: italic; color: var(--teal); }
+.hero p {
+  font-size: 15px; color: var(--ink-muted);
+  max-width: 480px; margin: 0 auto 2.5rem;
+}
+
+/* MAIN CONTAINER */
+.container { max-width: 760px; margin: 0 auto; padding: 0 1.5rem 4rem; }
+
+/* STEPPER */
+.stepper {
+  display: flex; align-items: center; gap: 0;
+  margin-bottom: 2.5rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.step-item {
+  flex: 1; padding: 14px 16px; text-align: center;
+  border-right: 1px solid var(--border);
+  transition: background 0.2s;
+}
+.step-item:last-child { border-right: none; }
+.step-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--gray-light); color: var(--ink-faint);
+  font-size: 11px; font-weight: 500; margin-bottom: 4px;
+}
+.step-label { font-size: 11px; color: var(--ink-faint); display: block; }
+.step-item.active { background: var(--teal-light); }
+.step-item.active .step-num { background: var(--teal); color: white; }
+.step-item.active .step-label { color: var(--teal); font-weight: 500; }
+.step-item.done .step-num { background: var(--ink); color: white; }
+.step-item.done .step-label { color: var(--ink-muted); }
+
+/* FORM CARD */
+.form-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+.form-section {
+  display: none;
+  padding: 2rem;
+}
+.form-section.active { display: block; animation: slideIn 0.25s ease; }
+@keyframes slideIn { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
+
+.section-title {
+  font-size: 13px; font-weight: 500; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--ink-faint);
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.field-group { margin-bottom: 1.25rem; }
+.field-label {
+  display: block; font-size: 13px; font-weight: 500;
+  color: var(--ink); margin-bottom: 6px;
+}
+.field-hint { font-size: 12px; color: var(--ink-faint); margin-bottom: 8px; display: block; }
+
+input[type=text], input[type=number], input[type=email], select, textarea {
+  width: 100%; padding: 10px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px; font-family: 'DM Sans', sans-serif;
+  font-size: 14px; color: var(--ink);
+  background: var(--surface);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+  appearance: none;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(13,122,95,0.1);
+}
+textarea { resize: vertical; min-height: 80px; }
+select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+/* RADIO CARDS */
+.radio-grid { display: grid; gap: 8px; }
+.radio-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+.radio-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+.radio-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+.radio-card {
+  border: 1px solid var(--border-strong);
+  border-radius: 10px; padding: 12px 14px;
+  cursor: pointer; transition: all 0.15s;
+  position: relative;
+}
+.radio-card:hover { border-color: var(--teal-mid); background: var(--teal-light); }
+.radio-card input { position: absolute; opacity: 0; width: 0; height: 0; }
+.radio-card.checked { border-color: var(--teal); background: var(--teal-light); }
+.rc-title { font-size: 13px; font-weight: 500; color: var(--ink); }
+.rc-sub { font-size: 11px; color: var(--ink-faint); margin-top: 2px; }
+.radio-card.checked .rc-title { color: var(--teal); }
+.radio-card.checked .rc-sub { color: var(--teal); opacity: 0.7; }
+
+/* NAV BUTTONS */
+.form-nav {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1.25rem 2rem;
+  border-top: 1px solid var(--border);
+  background: var(--gray-light);
+}
+.btn {
+  padding: 10px 24px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: all 0.15s; border: none;
+}
+.btn-ghost {
+  background: transparent; color: var(--ink-muted);
+  border: 1px solid var(--border-strong);
+}
+.btn-ghost:hover { background: var(--card); }
+.btn-primary {
+  background: var(--ink); color: white;
+}
+.btn-primary:hover { background: #2a2a2a; transform: translateY(-1px); }
+.btn-primary:disabled { background: var(--ink-faint); cursor: not-allowed; transform: none; }
+.btn-teal { background: var(--teal); color: white; }
+.btn-teal:hover { background: var(--teal-mid); transform: translateY(-1px); }
+
+/* RESULT */
+#result { display: none; }
+#result.visible { display: block; animation: slideIn 0.3s ease; }
+
+.result-hero {
+  background: var(--ink);
+  border-radius: 16px; padding: 2rem;
+  margin-bottom: 1.5rem;
+  color: white;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 1rem;
+}
+.result-name { font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 4px; }
+.result-profile {
+  font-family: 'DM Serif Display', serif;
+  font-size: 2rem; letter-spacing: -0.02em; margin-bottom: 8px;
+}
+.result-desc { font-size: 13px; color: rgba(255,255,255,0.65); max-width: 400px; line-height: 1.6; }
+.result-badge {
+  flex-shrink: 0; padding: 6px 14px; border-radius: 20px;
+  font-size: 12px; font-weight: 500; letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.metrics-row {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  margin-bottom: 1.5rem;
+}
+.metric-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 1rem 1.25rem;
+}
+.metric-label { font-size: 11px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+.metric-value { font-size: 20px; font-weight: 500; color: var(--ink); }
+.metric-sub { font-size: 11px; color: var(--ink-faint); margin-top: 2px; }
+
+.funds-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; overflow: hidden; margin-bottom: 1rem;
+}
+.funds-card-header {
+  padding: 14px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.funds-card-title { font-size: 13px; font-weight: 500; color: var(--ink); }
+.cat-badge {
+  font-size: 11px; padding: 3px 10px; border-radius: 20px;
+  font-weight: 500;
+}
+
+.fund-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+.fund-row:last-child { border-bottom: none; }
+.fund-row:hover { background: var(--gray-light); }
+
+.fund-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.fund-info { flex: 1; }
+.fund-name { font-size: 14px; font-weight: 500; color: var(--ink); }
+.fund-meta { font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
+.fund-right { display: flex; align-items: center; gap: 14px; }
+.alloc-wrap { display: flex; align-items: center; gap: 8px; }
+.alloc-track { width: 64px; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.alloc-fill { height: 100%; border-radius: 2px; }
+.alloc-pct { font-size: 13px; font-weight: 500; color: var(--ink-muted); min-width: 32px; text-align: right; }
+
+.rationale-box {
+  margin: 0 20px 16px;
+  padding: 12px 14px;
+  background: var(--gray-light);
+  border-radius: 8px;
+  font-size: 12px; color: var(--ink-muted); line-height: 1.6;
+}
+
+.ips-summary {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 1.5rem; margin-bottom: 1rem;
+}
+.ips-summary-title { font-size: 13px; font-weight: 500; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1rem; }
+.ips-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.ips-item { }
+.ips-key { font-size: 11px; color: var(--ink-faint); }
+.ips-val { font-size: 13px; font-weight: 500; color: var(--ink); }
+
+.restart-btn {
+  display: block; width: 100%; margin-top: 1.5rem;
+  padding: 12px; background: transparent;
+  border: 1px solid var(--border-strong); border-radius: 10px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+  color: var(--ink-muted); cursor: pointer; transition: all 0.15s;
+}
+.restart-btn:hover { background: var(--card); color: var(--ink); }
+
+.disclaimer {
+  font-size: 11px; color: var(--ink-faint); text-align: center;
+  margin-top: 2rem; line-height: 1.7;
+  max-width: 560px; margin-left: auto; margin-right: auto;
+}
+
+@media (max-width: 600px) {
+  .grid-2, .radio-grid.cols-3, .radio-grid.cols-4 { grid-template-columns: 1fr 1fr; }
+  .metrics-row { grid-template-columns: 1fr 1fr; }
+  .result-hero { flex-direction: column; }
+  .hero { padding: 2.5rem 1.5rem 1.5rem; }
+  .stepper { display: none; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">Invest<span>Craze</span></div>
+  <div class="nav-tag">IPS-based fund recommender</div>
+</nav>
+
+<div class="hero">
+  <div class="hero-eyebrow">Powered by InvestCraze</div>
+  <h1>Your <em>personalised</em> fund portfolio</h1>
+  <p>Answer a few questions about your financial situation and goals. We'll map your Investment Policy Statement to the right funds.</p>
+</div>
+
+<div class="container">
+
+  <!-- STEPPER -->
+  <div class="stepper">
+    <div class="step-item active" id="s1">
+      <div class="step-num">1</div>
+      <span class="step-label">Profile</span>
+    </div>
+    <div class="step-item" id="s2">
+      <div class="step-num">2</div>
+      <span class="step-label">Goals</span>
+    </div>
+    <div class="step-item" id="s3">
+      <div class="step-num">3</div>
+      <span class="step-label">Risk</span>
+    </div>
+    <div class="step-item" id="s4">
+      <div class="step-num">4</div>
+      <span class="step-label">Constraints</span>
+    </div>
+    <div class="step-item" id="s5">
+      <div class="step-num">5</div>
+      <span class="step-label">Portfolio</span>
+    </div>
+  </div>
+
+  <!-- FORM CARD -->
+  <div class="form-card" id="formCard">
+
+    <!-- SECTION 1: PROFILE -->
+    <div class="form-section active" id="sec1">
+      <div class="section-title">Investor profile</div>
+      <div class="grid-2">
+        <div class="field-group">
+          <label class="field-label">Full name</label>
+          <input type="text" id="clientName" placeholder="Rajesh Sharma">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Age</label>
+          <input type="number" id="clientAge" placeholder="35" min="18" max="80">
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field-group">
+          <label class="field-label">Occupation</label>
+          <select id="occupation">
+            <option value="">Select</option>
+            <option>Salaried — private sector</option>
+            <option>Salaried — government / PSU</option>
+            <option>Business owner</option>
+            <option>Professional (doctor / CA / lawyer)</option>
+            <option>Retired</option>
+            <option>Homemaker / dependent</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Annual income</label>
+          <select id="income">
+            <option value="">Select</option>
+            <option value="low">Under ₹5L</option>
+            <option value="mid">₹5L – ₹15L</option>
+            <option value="upper">₹15L – ₹50L</option>
+            <option value="high">₹50L+</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Investable surplus per month</label>
+        <select id="surplus">
+          <option value="">Select</option>
+          <option value="xsmall">Under ₹5,000</option>
+          <option value="small">₹5,000 – ₹15,000</option>
+          <option value="mid">₹15,000 – ₹50,000</option>
+          <option value="large">₹50,000 – ₹2L</option>
+          <option value="xlarge">Above ₹2L</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- SECTION 2: GOALS -->
+    <div class="form-section" id="sec2">
+      <div class="section-title">Investment goals</div>
+      <div class="field-group">
+        <label class="field-label">Primary objective</label>
+        <div class="radio-grid cols-2">
+          <label class="radio-card" onclick="pickRadio(this,'goal','wealth')">
+            <input type="radio" name="goal" value="wealth">
+            <div class="rc-title">Wealth creation</div>
+            <div class="rc-sub">Long-term compounding</div>
+          </label>
+          <label class="radio-card" onclick="pickRadio(this,'goal','tax')">
+            <input type="radio" name="goal" value="tax">
+            <div class="rc-title">Tax saving</div>
+            <div class="rc-sub">ELSS + 80C benefit</div>
+          </label>
+          <label class="radio-card" onclick="pickRadio(this,'goal','income')">
+            <input type="radio" name="goal" value="income">
+            <div class="rc-title">Regular income</div>
+            <div class="rc-sub">SWP or dividend</div>
+          </label>
+          <label class="radio-card" onclick="pickRadio(this,'goal','liquidity')">
+            <input type="radio" name="goal" value="liquidity">
+            <div class="rc-title">Capital preservation</div>
+            <div class="rc-sub">Safety + liquidity</div>
+          </label>
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Investment horizon</label>
+        <div class="radio-grid cols-4">
+          <label class="radio-card" onclick="pickRadio(this,'horizon','short')">
+            <input type="radio" name="horizon" value="short">
+            <div class="rc-title">Under 2 yrs</div>
+          </label>
+          <label class="radio-card" onclick="pickRadio(this,'horizon','mid')">
+            <input type="radio" name="horizon" value="mid">
+            <div class="rc-title">2–5 yrs</div>
+          </label>
+          <label class="radio-card" onclick="pickRadio(this,'horizon','long')">
+            <input type="radio" name="horizon" value="long">
+            <div class="rc-title">5–10 yrs</div>
+          </label>
+          <label class="radio-card" onclick="pickRadio(this,'horizon','vlong')">
+            <input type="radio" name="horizon" value="vlong">
+            <div class="rc-title">10+ yrs</div>
+          </label>
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Specific financial goal (optional)</label>
+        <input type="text" id="goalNote" placeholder="e.g. Child's education in 10 years, retirement at 55">
+      </div>
+    </div>
+
+    <!-- SECTION 3: RISK -->
+    <div class="form-section" id="sec3">
+      <div class="section-title">Risk tolerance</div>
+      <div class="field-group">
+        <label class="field-label">How would you react if your portfolio fell 25% in a year?</label>
+        <div class="radio-grid cols-3" style="margin-top:8px">
+          <label class="radio-card" onclick="pickRadio(this,'reaction','sell')">
+            <input type="radio" name="reaction" value="sell">
+            <div class="rc-title">Sell everything</div>
+            <div class="rc-sub">Can't handle losses</div>
+          </label>
+          <label class="radio-card" onclick="pickRadio(this,'reaction','hold')">
+            <input type="radio" name="reaction" value="hold">
+            <div class="rc-title">Hold and wait</div>
+            <div class="rc-sub">Trust recovery</div>
+          </label>
+          <label class="radio-card" onclick="pickRadio(this,'reaction','buy')">
+            <input type="radio" name="reaction" value="buy">
+            <div class="rc-title">Buy more</div>
+            <div class="rc-sub">Opportunity mindset</div>
+          </label>
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Prior investment experience</label>
+        <div class="radio-grid cols-3">
+          <label class="radio-card" onclick="pickRadio(this,'exp','none')">
+            <input type="radio" name="exp" value="none">
+            <div class="rc-title">First-time</div>
+            <div class="rc-sub">No prior investments</div>
+          </label>
+          <label class="radio-card" onclick="pickRadio(this,'exp','some')">
+            <input type="radio" name="exp" value="some">
+            <div class="rc-title">Some experience</div>
+            <div class="rc-sub">FD / basic MF</div>
+          </label>
+          <label class="radio-card" onclick="pickRadio(this,'exp','advanced')">
+            <input type="radio" name="exp" value="advanced">
+            <div class="rc-title">Experienced</div>
+            <div class="rc-sub">Equities, PMS, etc.</div>
+          </label>
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Existing investments (select all that apply)</label>
+        <div class="radio-grid cols-3" id="existingInv">
+          <label class="radio-card" onclick="toggleCheck(this)"><input type="checkbox" value="fd"><div class="rc-title">FD / RD</div></label>
+          <label class="radio-card" onclick="toggleCheck(this)"><input type="checkbox" value="mf"><div class="rc-title">Mutual Funds</div></label>
+          <label class="radio-card" onclick="toggleCheck(this)"><input type="checkbox" value="stocks"><div class="rc-title">Direct Stocks</div></label>
+          <label class="radio-card" onclick="toggleCheck(this)"><input type="checkbox" value="ppf"><div class="rc-title">PPF / NPS</div></label>
+          <label class="radio-card" onclick="toggleCheck(this)"><input type="checkbox" value="realestate"><div class="rc-title">Real estate</div></label>
+          <label class="radio-card" onclick="toggleCheck(this)"><input type="checkbox" value="none"><div class="rc-title">None</div></label>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: CONSTRAINTS -->
+    <div class="form-section" id="sec4">
+      <div class="section-title">Constraints & preferences</div>
+      <div class="field-group">
+        <label class="field-label">Liquidity requirement</label>
+        <span class="field-hint">How quickly might you need to access this money?</span>
+        <div class="radio-grid cols-3">
+          <label class="radio-card" onclick="pickRadio(this,'liquidity','high')">
+            <input type="radio" name="liquidity" value="high">
+            <div class="rc-title">High</div>
+            <div class="rc-sub">May need within 3 months</div>
+          </label>
+          <label class="radio-card" onclick="pickRadio(this,'liquidity','medium')">
+            <input type="radio" name="liquidity" value="medium">
+            <div class="rc-title">Medium</div>
+            <div class="rc-sub">Within 1 year okay</div>
+          </label>
+          <label class="radio-card" onclick="pickRadio(this,'liquidity','low')">
+            <input type="radio" name="liquidity" value="low">
+            <div class="rc-title">Low</div>
+            <div class="rc-sub">Fully locked okay</div>
+          </label>
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Tax saving needed under 80C?</label>
+        <div class="radio-grid cols-3">
+          <label class="radio-card" onclick="pickRadio(this,'taxneed','yes')">
+            <input type="radio" name="taxneed" value="yes">
+            <div class="rc-title">Yes</div>
+            <div class="rc-sub">Include ELSS</div>
+          </label>
+          <label class="radio-card" onclick="pickRadio(this,'taxneed','no')">
+            <input type="radio" name="taxneed" value="no">
+            <div class="rc-title">No</div>
+            <div class="rc-sub">Already covered</div>
+          </label>
+          <label class="radio-card" onclick="pickRadio(this,'taxneed','partial')">
+            <input type="radio" name="taxneed" value="partial">
+            <div class="rc-title">Partially</div>
+            <div class="rc-sub">Some room left</div>
+          </label>
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Any fund house or category to avoid?</label>
+        <input type="text" id="avoidNote" placeholder="e.g. No small cap, avoid Axis AMC">
+      </div>
+    </div>
+
+    <div class="form-nav">
+      <button class="btn btn-ghost" id="prevBtn" onclick="navigate(-1)" style="visibility:hidden">Back</button>
+      <span style="font-size:12px;color:var(--ink-faint)" id="stepCounter">Step 1 of 4</span>
+      <button class="btn btn-primary" id="nextBtn" onclick="navigate(1)">Continue</button>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="result">
+    <div class="result-hero" id="resultHero">
+      <div>
+        <div class="result-name" id="rName"></div>
+        <div class="result-profile" id="rProfile"></div>
+        <div class="result-desc" id="rDesc"></div>
+      </div>
+      <div class="result-badge" id="rBadge"></div>
+    </div>
+
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-label">Suggested SIP</div>
+        <div class="metric-value" id="mSip"></div>
+        <div class="metric-sub">per month</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Horizon</div>
+        <div class="metric-value" id="mHorizon"></div>
+        <div class="metric-sub" id="mHorizonSub"></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Risk profile</div>
+        <div class="metric-value" id="mRisk"></div>
+        <div class="metric-sub" id="mRiskSub"></div>
+      </div>
+    </div>
+
+    <div id="fundsOutput"></div>
+
+    <div class="ips-summary">
+      <div class="ips-summary-title">Investment Policy Statement — Summary</div>
+      <div class="ips-grid" id="ipsSummaryGrid"></div>
+    </div>
+
+    <button class="restart-btn" onclick="restart()">Start a new IPS assessment</button>
+
+    <div class="disclaimer">
+      This recommendation is generated by InvestCraze based on your inputs and is for informational purposes only. Mutual fund investments are subject to market risks. Please read all scheme-related documents carefully before investing. Past performance is not indicative of future returns.
+    </div>
+  </div>
+
+</div>
+
+<script>
+let currentStep = 1;
+const totalSteps = 4;
+
+const ips = {};
+
+function pickRadio(el, name, val) {
+  document.querySelectorAll(`[name="${name}"]`).forEach(r => r.closest('.radio-card').classList.remove('checked'));
+  el.classList.add('checked');
+  ips[name] = val;
+}
+
+function toggleCheck(el) {
+  el.classList.toggle('checked');
+}
+
+function navigate(dir) {
+  if (dir === 1 && currentStep === totalSteps) {
+    generateResult(); return;
+  }
+  const next = currentStep + dir;
+  if (next < 1 || next > totalSteps) return;
+
+  document.getElementById('sec'+currentStep).classList.remove('active');
+  document.getElementById('s'+currentStep).classList.remove('active');
+  document.getElementById('s'+currentStep).classList.add('done');
+
+  currentStep = next;
+
+  document.getElementById('sec'+currentStep).classList.add('active');
+  document.getElementById('s'+currentStep).classList.remove('done');
+  document.getElementById('s'+currentStep).classList.add('active');
+
+  document.getElementById('prevBtn').style.visibility = currentStep > 1 ? 'visible' : 'hidden';
+  document.getElementById('stepCounter').textContent = `Step ${currentStep} of ${totalSteps}`;
+
+  if (currentStep === totalSteps) {
+    document.getElementById('nextBtn').textContent = 'Generate portfolio';
+    document.getElementById('nextBtn').className = 'btn btn-teal';
+  } else {
+    document.getElementById('nextBtn').textContent = 'Continue';
+    document.getElementById('nextBtn').className = 'btn btn-primary';
+  }
+}
+
+function deriveProfile() {
+  const reaction = ips.reaction || 'hold';
+  const exp = ips.exp || 'some';
+  const horizon = ips.horizon || 'long';
+  const goal = ips.goal || 'wealth';
+  const liquidity = ips.liquidity || 'medium';
+
+  let score = 0;
+  if (reaction === 'buy') score += 3;
+  else if (reaction === 'hold') score += 1;
+  if (exp === 'advanced') score += 3;
+  else if (exp === 'some') score += 1;
+  if (horizon === 'vlong') score += 3;
+  else if (horizon === 'long') score += 2;
+  else if (horizon === 'mid') score += 1;
+  if (goal === 'wealth') score += 2;
+  if (liquidity === 'low') score += 2;
+  else if (liquidity === 'medium') score += 1;
+  if (goal === 'liquidity' || goal === 'income') score -= 2;
+
+  if (score >= 10) return 'aggressive';
+  if (score >= 5) return 'moderate';
+  return 'conservative';
+}
+
+const portfolios = {
+  conservative: {
+    label: 'Conservative',
+    tagline: 'Capital protection with steady returns',
+    desc: 'Your profile calls for a debt-heavy portfolio with limited, managed equity exposure. Focus is on preserving capital while beating inflation modestly.',
+    badgeBg: '#e6f4f0', badgeColor: '#0d7a5f',
+    riskLabel: 'Low', riskSub: 'Capital-first',
+    categories: [
+      {
+        title: 'Debt core',
+        catBg: '#f3f2ef', catColor: '#555',
+        funds: [
+          { name: 'HDFC Short Duration Fund', meta: 'Short Duration · AA+ quality · 2–3 yr horizon', alloc: 30, dot: '#888' },
+          { name: 'ICICI Pru Corporate Bond', meta: 'Corporate Bond · Top-rated paper only', alloc: 25, dot: '#888' },
+          { name: 'Nippon India Liquid', meta: 'Liquid Fund · Emergency buffer · T+1 redemption', alloc: 20, dot: '#aaa' },
+        ],
+        rationale: 'Short duration and corporate bond funds give better yield than FDs without taking significant interest rate risk. Liquid fund keeps 20% instantly accessible.'
+      },
+      {
+        title: 'Equity cushion',
+        catBg: '#e6f4f0', catColor: '#0d7a5f',
+        funds: [
+          { name: 'HDFC Balanced Advantage Fund', meta: 'BAF · Dynamic equity-debt allocation · Drawdown-managed', alloc: 15, dot: '#1D9E75' },
+          { name: 'Mirae Asset Large Cap', meta: 'Large Cap · Low volatility equity exposure', alloc: 10, dot: '#378ADD' },
+        ],
+        rationale: 'The BAF manages its own equity-debt split based on valuations — you get equity upside without full equity risk. Large cap anchors the equity portion.'
+      }
+    ]
+  },
+  moderate: {
+    label: 'Moderate',
+    tagline: 'Balanced growth with managed volatility',
+    desc: 'Your profile suits a diversified equity-led portfolio with a stability buffer. Designed for 5–10 year wealth creation with tolerable short-term swings.',
+    badgeBg: '#e8f0fb', badgeColor: '#1a5fa8',
+    riskLabel: 'Medium', riskSub: 'Growth + stability',
+    categories: [
+      {
+        title: 'Equity core',
+        catBg: '#e8f0fb', catColor: '#1a5fa8',
+        funds: [
+          { name: 'Parag Parikh Flexi Cap', meta: 'Flexi Cap · Global diversification · Consistent compounder', alloc: 25, dot: '#378ADD' },
+          { name: 'Nifty 50 Index Fund (UTI / HDFC)', meta: 'Large Cap Index · Lowest cost · Market benchmark', alloc: 20, dot: '#378ADD' },
+          { name: 'HDFC Mid-Cap Opportunities', meta: 'Mid Cap · Long-term alpha · Higher volatility', alloc: 20, dot: '#BA7517' },
+        ],
+        rationale: 'PPFAS provides global diversification and downside protection. Nifty 50 index keeps costs low. Mid cap adds alpha for the long run.'
+      },
+      {
+        title: 'Stability layer',
+        catBg: '#e6f4f0', catColor: '#0d7a5f',
+        funds: [
+          { name: 'ICICI Pru Balanced Advantage Fund', meta: 'BAF · Auto-rebalances equity-debt · Low drawdown', alloc: 20, dot: '#1D9E75' },
+          { name: 'SBI Short Duration', meta: 'Short Duration Debt · Stability buffer · Quarterly review', alloc: 15, dot: '#888' },
+        ],
+        rationale: 'The BAF and short duration fund act as shock absorbers — they prevent the portfolio from swinging too hard in volatile markets.'
+      }
+    ]
+  },
+  aggressive: {
+    label: 'Aggressive',
+    tagline: 'Maximum wealth creation over 7+ years',
+    desc: 'Your profile supports a predominantly equity portfolio across market caps. Expect significant short-term volatility — the payoff is superior long-term compounding.',
+    badgeBg: '#fdeaea', badgeColor: '#b52b2b',
+    riskLabel: 'High', riskSub: 'Growth-first',
+    categories: [
+      {
+        title: 'High conviction equity',
+        catBg: '#fdeaea', catColor: '#b52b2b',
+        funds: [
+          { name: 'Quant Small Cap Fund', meta: 'Small Cap · Highest risk · Highest potential returns', alloc: 25, dot: '#D85A30' },
+          { name: 'HDFC Mid-Cap Opportunities', meta: 'Mid Cap · Consistent long-term performer', alloc: 25, dot: '#BA7517' },
+          { name: 'Parag Parikh Flexi Cap', meta: 'Flexi Cap · Global hedge + domestic conviction', alloc: 25, dot: '#378ADD' },
+        ],
+        rationale: 'Heavy small and mid cap allocation for maximum long-term alpha. PPFAS provides downside hedge through its global allocation and conservative stock picking.'
+      },
+      {
+        title: 'Core anchor',
+        catBg: '#e8f0fb', catColor: '#1a5fa8',
+        funds: [
+          { name: 'Nifty 50 Index Fund', meta: 'Large Cap Index · Low cost · Core allocation', alloc: 15, dot: '#378ADD' },
+          { name: 'Nippon India Liquid', meta: 'Liquid Fund · 10% reserve for opportunistic buying in dips', alloc: 10, dot: '#888' },
+        ],
+        rationale: 'Index fund anchors the portfolio to market returns. The liquid 10% is intentional — it lets you deploy during market corrections without redeeming equity.'
+      }
+    ]
+  }
+};
+
+const sipMap = {
+  xsmall: 'Under ₹5,000',
+  small: '₹5,000–15,000',
+  mid: '₹15,000–50,000',
+  large: '₹50,000–2L',
+  xlarge: '₹2L+'
+};
+
+const horizonMap = {
+  short: { val: '<2 yrs', sub: 'Short term' },
+  mid: { val: '2–5 yrs', sub: 'Medium term' },
+  long: { val: '5–10 yrs', sub: 'Long term' },
+  vlong: { val: '10+ yrs', sub: 'Very long term' }
+};
+
+function generateResult() {
+  ips.name = document.getElementById('clientName').value || 'Investor';
+  ips.surplus = document.getElementById('surplus').value;
+  ips.horizon = ips.horizon || 'long';
+
+  const profile = deriveProfile();
+  const p = portfolios[profile];
+
+  document.getElementById('formCard').style.display = 'none';
+  document.querySelector('.stepper').style.display = 'none';
+
+  const resultEl = document.getElementById('result');
+  resultEl.classList.add('visible');
+
+  document.getElementById('rName').textContent = ips.name + "'s portfolio";
+  document.getElementById('rProfile').textContent = p.label + ' investor';
+  document.getElementById('rDesc').textContent = p.desc;
+  document.getElementById('rBadge').textContent = p.label;
+  document.getElementById('rBadge').style.background = p.badgeBg;
+  document.getElementById('rBadge').style.color = p.badgeColor;
+
+  document.getElementById('mSip').textContent = sipMap[ips.surplus] || '—';
+  const h = horizonMap[ips.horizon] || horizonMap['long'];
+  document.getElementById('mHorizon').textContent = h.val;
+  document.getElementById('mHorizonSub').textContent = h.sub;
+  document.getElementById('mRisk').textContent = p.riskLabel;
+  document.getElementById('mRiskSub').textContent = p.riskSub;
+
+  let fundsHtml = '';
+  if (ips.taxneed === 'yes' || ips.taxneed === 'partial') {
+    fundsHtml += `
+      <div class="funds-card" style="margin-bottom:1rem">
+        <div class="funds-card-header">
+          <div class="funds-card-title">ELSS addition — 80C tax saving</div>
+          <div class="cat-badge" style="background:#fdf3e8;color:#b85c0a">Tax saving</div>
+        </div>
+        <div class="fund-row">
+          <div class="fund-dot" style="background:#BA7517"></div>
+          <div class="fund-info">
+            <div class="fund-name">Mirae Asset ELSS Tax Saver</div>
+            <div class="fund-meta">ELSS · 3-year lock-in · Up to ₹1.5L 80C deduction · Equity-linked returns</div>
+          </div>
+          <div class="fund-right">
+            <div class="alloc-wrap">
+              <div class="alloc-track"><div class="alloc-fill" style="width:100%;background:#BA7517"></div></div>
+              <div class="alloc-pct">Add-on</div>
+            </div>
+          </div>
+        </div>
+        <div class="rationale-box">Invest up to ₹1.5L/year in ELSS to max out your 80C deduction. This is over and above the core portfolio allocation — size it based on your remaining 80C room.</div>
+      </div>`;
+  }
+
+  p.categories.forEach(cat => {
+    let rows = cat.funds.map(f => {
+      const barW = Math.round(f.alloc);
+      return `
+        <div class="fund-row">
+          <div class="fund-dot" style="background:${f.dot}"></div>
+          <div class="fund-info">
+            <div class="fund-name">${f.name}</div>
+            <div class="fund-meta">${f.meta}</div>
+          </div>
+          <div class="fund-right">
+            <div class="alloc-wrap">
+              <div class="alloc-track"><div class="alloc-fill" style="width:${barW}%;background:${f.dot}"></div></div>
+              <div class="alloc-pct">${f.alloc}%</div>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+    fundsHtml += `
+      <div class="funds-card">
+        <div class="funds-card-header">
+          <div class="funds-card-title">${cat.title}</div>
+          <div class="cat-badge" style="background:${cat.catBg};color:${cat.catColor}">${cat.funds.reduce((s,f)=>s+f.alloc,0)}% of portfolio</div>
+        </div>
+        ${rows}
+        <div class="rationale-box">${cat.rationale}</div>
+      </div>`;
+  });
+
+  document.getElementById('fundsOutput').innerHTML = fundsHtml;
+
+  const goalLabels = { wealth:'Wealth creation', tax:'Tax saving', income:'Regular income', liquidity:'Capital preservation' };
+  const reactionLabels = { sell:'Exit on loss', hold:'Hold through', buy:'Buy on dips' };
+  const expLabels = { none:'First-time investor', some:'Some experience', advanced:'Experienced' };
+  const liquidityLabels = { high:'High (within 3 months)', medium:'Medium (within 1 year)', low:'Low (fully locked ok)' };
+
+  const items = [
+    ['Client', ips.name || '—'],
+    ['Primary goal', goalLabels[ips.goal] || '—'],
+    ['Horizon', h.val],
+    ['Risk tolerance', p.label],
+    ['Market reaction', reactionLabels[ips.reaction] || '—'],
+    ['Experience', expLabels[ips.exp] || '—'],
+    ['Liquidity need', liquidityLabels[ips.liquidity] || '—'],
+    ['Tax saving (80C)', ips.taxneed === 'yes' ? 'Required' : ips.taxneed === 'partial' ? 'Partial' : 'Not required'],
+  ];
+
+  document.getElementById('ipsSummaryGrid').innerHTML = items.map(([k,v]) => `
+    <div class="ips-item"><div class="ips-key">${k}</div><div class="ips-val">${v}</div></div>
+  `).join('');
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function restart() {
+  location.reload();
+}
+</script>
+</body>
+</html>
